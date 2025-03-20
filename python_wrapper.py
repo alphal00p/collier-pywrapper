@@ -113,10 +113,11 @@ def py_wrapper_TNten_cll(TNten, TNtenuv, MomVec, MomInv, mass2, Nn, R, TNtenerr,
     
     return TNten, TNtenuv
 
-
+def mink_square(v):
+    return v[0]**2-v[1]**2-v[2]**2-v[3]**2
 
 if __name__ == "__main__":
-    py_wrapper_init(2,2,"output_folder")
+    """ py_wrapper_init(2,2,"output_folder")
     print("Nc and Nt")
     print(py_wrapper_GetNc_cll(2,2))
     print(py_wrapper_GetNt_cll(2))
@@ -151,5 +152,33 @@ if __name__ == "__main__":
     new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, Nn, R, TNtenerr, N)
     print("Updated parameters:")
     print("TNten =", new_TNten)
-    print("TNtenuv =", new_TNtenuv)
+    print("TNtenuv =", new_TNtenuv) """
+
+    N=3
+    R=3
+    py_wrapper_init(N,R,"gg_to_H")
+    Nt=py_wrapper_GetNt_cll(R)
+
+    TNten = np.array([0+0j] * Nt, dtype=np.complex128)
+    TNtenuv = np.array([0+0j] * Nt, dtype=np.complex128)
+    TNtenerr = np.array([0] * Nt, dtype=np.double)
+
+    p1=np.array([1+0j,0+0j,0+0j,1+0j], dtype=np.complex128)
+    p2=np.array([1+0j,0+0j,0+0j,-1+0j], dtype=np.complex128)
+    q=-p1-p2
+
+    Momvec = np.concatenate((p1,p2,q),axis=None)
+
+    MomInv = np.array([mink_square(p1-p2),mink_square(p2-q),mink_square(q-p1)], dtype=np.complex128)
+
+    mass2=np.array([1/2+0j,1/2+0j,1/2+0j], dtype=np.complex128)
+
+    new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+
+    print(new_TNten)
+    print(new_TNtenuv)
+
+
+
+
 
