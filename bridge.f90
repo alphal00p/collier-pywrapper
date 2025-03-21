@@ -104,8 +104,6 @@ contains
     ! Output vector:
     complex(c_double), intent(in), target :: TNtenerr(*)
 
-
-
     complex(c_double_complex), pointer :: fTNten(:), fTNtenuv(:), fMomInv(:), fmass2(:)
     complex(c_double_complex), pointer :: fMomvec(:,:)
     real(c_double), pointer :: fTNtenerr(:)
@@ -114,20 +112,14 @@ contains
     integer(c_int) :: np
     integer(c_int) :: nt
 
-
     nc=GetNc_cll(N,R)
     nt=GetNt_cll(R)
     np=N*(N-1)/2
-
-    
 
     call c_f_pointer(c_loc(TNten(1)), fTNten, [nt])
     call c_f_pointer(c_loc(TNtenuv(1)), fTNtenuv, [nt])
     call c_f_pointer(c_loc(mass2(1)), fmass2, [N])
     call c_f_pointer(c_loc(TNtenerr(1)), fTNtenerr, [R])
-
-
-
     
     if (N == 1) then
       call TNten_cll(fTNten,fTNtenuv,fmass2,Nn,R,fTNtenerr)
@@ -138,5 +130,68 @@ contains
     end if
 
   end subroutine wrapper_TNten_cll
+
+  ! UV POLES
+
+  subroutine wrapper_GetDeltaUV_cll(delta) bind(c, name='wrapper_GetDeltaUV_cll')
+    type(c_ptr), value :: delta
+    real(c_double), pointer :: fdelta
+    call c_f_pointer(delta, fdelta)
+    call GetDeltaUV_cll(fdelta)
+  end subroutine wrapper_GetDeltaUV_cll
+
+  subroutine wrapper_GetMuUV2_cll(mu2) bind(c, name='wrapper_GetMuUV2_cll')
+    type(c_ptr), value :: mu2
+    real(c_double), pointer :: fmu2
+    call c_f_pointer(mu2, fmu2)
+    call GetMuUV2_cll(fmu2)
+  end subroutine wrapper_GetMuUV2_cll
+
+  subroutine wrapper_SetDeltaUV_cll(delta) bind(c, name='wrapper_SetDeltaUV_cll')
+    type(c_ptr), value :: delta
+    real(c_double), pointer :: fdelta
+    call c_f_pointer(delta, fdelta)
+    call SetDeltaUV_cll(fdelta)
+  end subroutine wrapper_SetDeltaUV_cll
+
+  subroutine wrapper_SetMuUV2_cll(mu2) bind(c, name='wrapper_SetMuUV2_cll')
+    type(c_ptr), value :: mu2
+    real(c_double), pointer :: fmu2
+    call c_f_pointer(mu2, fmu2)
+    call SetMuUV2_cll(fmu2)
+  end subroutine wrapper_SetMuUV2_cll
+
+
+  ! IR POLES
+
+  subroutine wrapper_GetDeltaIR_cll(delta1,delta2) bind(c, name='wrapper_GetDeltaIR_cll')
+    type(c_ptr), value :: delta1, delta2
+    real(c_double), pointer :: fdelta1, fdelta2
+    call c_f_pointer(delta1, fdelta1)
+    call c_f_pointer(delta2, fdelta2)
+    call GetDeltaIR_cll(fdelta1, fdelta2)
+  end subroutine wrapper_GetDeltaIR_cll
+
+  subroutine wrapper_GetMuIR2_cll(mu2) bind(c, name='wrapper_GetMuIR2_cll')
+    type(c_ptr), value :: mu2
+    real(c_double), pointer :: fmu2
+    call c_f_pointer(mu2, fmu2)
+    call GetMuIR2_cll(fmu2)
+  end subroutine wrapper_GetMuIR2_cll
+
+  subroutine wrapper_SetDeltaIR_cll(delta1, delta2) bind(c, name='wrapper_SetDeltaIR_cll')
+    type(c_ptr), value :: delta1, delta2
+    real(c_double), pointer :: fdelta1, fdelta2
+    call c_f_pointer(delta1, fdelta1)
+    call c_f_pointer(delta2, fdelta2)
+    call SetDeltaIR_cll(fdelta1, fdelta2)
+  end subroutine wrapper_SetDeltaIR_cll
+
+  subroutine wrapper_SetMuIR2_cll(mu2) bind(c, name='wrapper_SetMuIR2_cll')
+    type(c_ptr), value :: mu2
+    real(c_double), pointer :: fmu2
+    call c_f_pointer(mu2, fmu2)
+    call SetMuIR2_cll(fmu2)
+  end subroutine wrapper_SetMuIR2_cll
 
 end module collier_wrapper

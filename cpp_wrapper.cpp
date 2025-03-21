@@ -8,6 +8,17 @@ extern "C" {
     void wrapper_TN_cll(const double _Complex* TN, const double _Complex* TNuv, const double _Complex* MomInv, const double _Complex* mass2, int* Nn, int* R, const double* TNerr, int*N);
     int wrapper_GetNt_cll(int* rank);
     void wrapper_TNten_cll(const double _Complex* TNten, const double _Complex* TNtenuv, const double _Complex* Momvec, const double _Complex* MomInv, const double _Complex* mass2, int* Nn, int* R, const double* TNtenerr, int*N);
+
+    void wrapper_GetDeltaUV_cll(double* delta);
+    void wrapper_GetMuUV2_cll(double* mu);
+    void wrapper_SetDeltaUV_cll(double* delta);
+    void wrapper_SetMuUV2_cll(double* mu);
+
+    void wrapper_GetDeltaIR_cll(double* delta1, double* delta2);
+    void wrapper_GetMuIR2_cll(double* mu);
+    void wrapper_SetDeltaIR_cll(double* delta1, double* delta2);
+    void wrapper_SetMuIR2_cll(double* mu);
+
 }
 
 int main() {

@@ -1,5 +1,5 @@
 import ctypes
-from ctypes import c_int, c_char_p, POINTER, byref
+from ctypes import c_int, c_char_p, POINTER, byref, c_double
 import numpy as np
 import math
 from numpy.ctypeslib import ndpointer
@@ -113,6 +113,78 @@ def py_wrapper_TNten_cll(TNten, TNtenuv, MomVec, MomInv, mass2, Nn, R, TNtenerr,
     
     return TNten, TNtenuv
 
+
+#######################################################
+############## WRAPPERS FOR IR FUNCTIONS ##############
+#######################################################
+
+lib.wrapper_GetDeltaIR_cll.argtypes = [POINTER(c_double),POINTER(c_double)]
+lib.wrapper_GetDeltaIR_cll.restype = None
+
+def py_wrapper_GetDeltaIR_cll(delta1,delta2):
+    delta1_c = c_double(delta1)
+    delta2_c = c_double(delta2)
+    return lib.wrapper_GetDeltaIR_cll(byref(delta1_c),byref(delta2_c))
+
+lib.wrapper_GetMuIR2_cll.argtypes = [POINTER(c_double)]
+lib.wrapper_GetMuIR2_cll.restype = None
+
+def py_wrapper_GetMuIR2_cll(mu):
+    mu_c = c_double(mu)
+    return lib.wrapper_GetMuIR2_cll(byref(mu_c))
+
+lib.wrapper_SetDeltaIR_cll.argtypes = [POINTER(c_double),POINTER(c_double)]
+lib.wrapper_SetDeltaIR_cll.restype = None
+
+def py_wrapper_SetDeltaIR_cll(delta1,delta2):
+    delta1_c = c_double(delta1)
+    delta2_c = c_double(delta2)
+    return lib.wrapper_SetDeltaIR_cll(byref(delta1_c),byref(delta2_c))
+
+lib.wrapper_SetMuIR2_cll.argtypes = [POINTER(c_double)]
+lib.wrapper_SetMuIR2_cllrestype = None
+
+def py_wrapper_SetMuIR2_cll(mu):
+    mu_c = c_double(mu)
+    return lib.wrapper_SetMuIR2_cll(byref(mu_c))
+
+
+#######################################################
+############## WRAPPERS FOR UV FUNCTIONS ##############
+#######################################################
+
+lib.wrapper_GetDeltaUV_cll.argtypes = [POINTER(c_double)]
+lib.wrapper_GetDeltaUV_cll.restype = None
+
+def py_wrapper_GetDeltaUV_cll(delta):
+    delta_c = c_double(delta)
+    return lib.wrapper_GetDeltaUV_cll(byref(delta_c))
+
+lib.wrapper_GetMuUV2_cll.argtypes = [POINTER(c_double)]
+lib.wrapper_GetMuUV2_cll.restype = None
+
+def py_wrapper_GetMuUV2_cll(delta):
+    delta_c = c_double(delta)
+    return lib.wrapper_GetMuUV2_cll(byref(delta_c))
+
+lib.wrapper_SetDeltaUV_cll.argtypes = [POINTER(c_double)]
+lib.wrapper_SetDeltaUV_cll.restype = None
+
+def py_wrapper_SetDeltaUV_cll(delta):
+    delta_c = c_double(delta)
+    return lib.wrapper_SetDeltaUV_cll(byref(delta_c))
+
+lib.wrapper_SetMuUV2_cll.argtypes = [POINTER(c_double)]
+lib.wrapper_SetMuUV2_cll.restype = None
+
+def py_wrapper_SetMuUV2_cll(delta):
+    delta_c = c_double(delta)
+    return lib.wrapper_SetMuUV2_cll(byref(delta_c))
+
+
+
+
+
 def mink_square(v):
     return v[0]**2-v[1]**2-v[2]**2-v[3]**2
 
@@ -155,13 +227,13 @@ if __name__ == "__main__":
     print("TNtenuv =", new_TNtenuv) """
 
     N=3
-    R=3
+    R=0
     py_wrapper_init(N,R,"gg_to_H")
     Nt=py_wrapper_GetNt_cll(R)
 
-    TNten = np.array([0+0j] * Nt, dtype=np.complex128)
-    TNtenuv = np.array([0+0j] * Nt, dtype=np.complex128)
-    TNtenerr = np.array([0] * Nt, dtype=np.double)
+    TNten = np.array([0+0j] * (Nt+1), dtype=np.complex128)
+    TNtenuv = np.array([0+0j] * (Nt+1), dtype=np.complex128)
+    TNtenerr = np.array([0] * (Nt+1), dtype=np.double)
 
     p1=np.array([1+0j,0+0j,0+0j,1+0j], dtype=np.complex128)
     p2=np.array([1+0j,0+0j,0+0j,-1+0j], dtype=np.complex128)
@@ -169,14 +241,51 @@ if __name__ == "__main__":
 
     Momvec = np.concatenate((p1,p2,q),axis=None)
 
-    MomInv = np.array([mink_square(p1-p2),mink_square(p2-q),mink_square(q-p1)], dtype=np.complex128)
+    MomInv = np.array([mink_square(p1),mink_square(p2),mink_square(q),mink_square(p1+p2),mink_square(p2+q),mink_square(p1+q)], dtype=np.complex128)
 
-    mass2=np.array([1/2+0j,1/2+0j,1/2+0j], dtype=np.complex128)
+    mass2=np.array([0+0j,0+0j,0+0j], dtype=np.complex128)
+
+    py_wrapper_SetMuIR2_cll(1)
+
+    py_wrapper_SetDeltaIR_cll(0,0)
 
     new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
 
+    print("---- 00 ----")
     print(new_TNten)
     print(new_TNtenuv)
+
+    deltauv = 0
+    deltair1 = 1
+    deltair2 = 0
+
+    py_wrapper_SetDeltaIR_cll(deltair1,deltair2)
+
+    new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+
+    print("---- 10 ----")
+
+    print(new_TNten)
+    print(new_TNtenuv)
+
+    
+
+    deltauv = 0
+    deltair1 = 0
+    deltair2 = 1
+
+    py_wrapper_SetDeltaIR_cll(deltair1,deltair2)
+
+    new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+
+    print("---- 01 ----")
+
+    print(new_TNten)
+    print(new_TNtenuv)
+
+
+
+
 
 
 
