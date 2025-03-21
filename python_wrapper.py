@@ -3,6 +3,7 @@ from ctypes import c_int, c_char_p, POINTER, byref, c_double
 import numpy as np
 import math
 from numpy.ctypeslib import ndpointer
+import argparse
 
 # Load the shared library (adjust the path/name as needed)
 lib = ctypes.CDLL("./cpp_wrapper.so")
@@ -189,99 +190,82 @@ def mink_square(v):
     return v[0]**2-v[1]**2-v[2]**2-v[3]**2
 
 if __name__ == "__main__":
-    """ py_wrapper_init(2,2,"output_folder")
-    print("Nc and Nt")
-    print(py_wrapper_GetNc_cll(2,2))
-    print(py_wrapper_GetNt_cll(2))
 
-    size = 5  # Adjust as needed.
-    
-    # Create example NumPy arrays for the four complex inputs.
-    TN     = np.array([1+0j, 1+0j, 1+0j, 1+0j], dtype=np.complex128)
-    TNuv   = np.array([1+0j, 1+0j, 1+0j, 1+0j], dtype=np.complex128)
-    MomInv = np.array([3+0j], dtype=np.complex128)
-    mass2  = np.array([4+0j, 6+0j], dtype=np.complex128)
-    
-    # Create an example TNerr array (double precision).
-    TNerr = np.array([0, 0], dtype=np.double)
-    
-    # Initial values for the integer parameters.
-    Nn = 2
-    R  = 2
-    N  = 2
 
-    new_TN, new_TNuv = py_wrapper_TN_cll(TN, TNuv, MomInv, mass2, Nn, R, TNerr, N)
-    print("Updated parameters:")
-    print("TN =", new_TN, "TNuv =", new_TNuv)
+    parser = argparse.ArgumentParser(description="Parse one string input from the command line.")
+    parser.add_argument("input_string", nargs="?", default=None, help="add one of the following arguments (default=None): ")
+    args = parser.parse_args()
 
-    print(py_wrapper_GetNt_cll(R))
+    if args.input_string is not None:
+        if args.input_string=="test_scalar_triangle":
 
-    TNten     = np.array([1+0j, 1+0j, 1+0j, 1+0j,1+0j, 1+0j, 1+0j, 1+0j,1+0j, 1+0j, 2+0j, 1+0j, 1+0j, 1+0j, 1+0j], dtype=np.complex128)
-    TNtenuv   = np.array([1+0j, 1+0j, 1+0j, 1+0j,1+0j, 1+0j, 1+0j, 1+0j,1+0j, 1+0j, 1+0j, 1+0j, 1+0j, 1+0j, 1+0j], dtype=np.complex128)
-    TNtenerr = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], dtype=np.double)
-    Momvec = np.array([math.sqrt(3+1+0.25)+0j,0,0.5+0j,1+0j], dtype=np.complex128)
+            N=3
+            R=0
+            py_wrapper_init(N,R,"gg_to_H")
+            Nt=py_wrapper_GetNt_cll(R)
 
-    new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, Nn, R, TNtenerr, N)
-    print("Updated parameters:")
-    print("TNten =", new_TNten)
-    print("TNtenuv =", new_TNtenuv) """
+            TNten = np.array([0+0j] * (Nt+1), dtype=np.complex128)
+            TNtenuv = np.array([0+0j] * (Nt+1), dtype=np.complex128)
+            TNtenerr = np.array([0] * (Nt+1), dtype=np.double)
 
-    N=3
-    R=0
-    py_wrapper_init(N,R,"gg_to_H")
-    Nt=py_wrapper_GetNt_cll(R)
+            p1=np.array([1+0j,0+0j,0+0j,1+0j], dtype=np.complex128)
+            p2=np.array([1+0j,0+0j,0+0j,-1+0j], dtype=np.complex128)
+            q=-p1-p2
 
-    TNten = np.array([0+0j] * (Nt+1), dtype=np.complex128)
-    TNtenuv = np.array([0+0j] * (Nt+1), dtype=np.complex128)
-    TNtenerr = np.array([0] * (Nt+1), dtype=np.double)
+            Momvec = np.concatenate((p1,p2,q),axis=None)
 
-    p1=np.array([1+0j,0+0j,0+0j,1+0j], dtype=np.complex128)
-    p2=np.array([1+0j,0+0j,0+0j,-1+0j], dtype=np.complex128)
-    q=-p1-p2
+            MomInv = np.array([mink_square(p1),mink_square(p2),mink_square(q),mink_square(p1+p2),mink_square(p2+q),mink_square(p1+q)], dtype=np.complex128)
 
-    Momvec = np.concatenate((p1,p2,q),axis=None)
+            mass2=np.array([0+0j,0+0j,0+0j], dtype=np.complex128)
 
-    MomInv = np.array([mink_square(p1),mink_square(p2),mink_square(q),mink_square(p1+p2),mink_square(p2+q),mink_square(p1+q)], dtype=np.complex128)
+            py_wrapper_SetMuIR2_cll(1)
 
-    mass2=np.array([0+0j,0+0j,0+0j], dtype=np.complex128)
+            py_wrapper_SetDeltaIR_cll(0,0)
 
-    py_wrapper_SetMuIR2_cll(1)
+            new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
 
-    py_wrapper_SetDeltaIR_cll(0,0)
+            print("---- DeltaIR1 = 0, DeltaIR2 = 0 ----")
+            print("results from collier")
+            print(new_TNten)
+            print(new_TNtenuv)
+            print("my benchmark")
+            print(-1.4047075598891257241388639034827-1.0887930451518010652503444491188j)
+            print(0)
 
-    new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+            deltauv = 0
+            deltair1 = 1
+            deltair2 = 0
 
-    print("---- 00 ----")
-    print(new_TNten)
-    print(new_TNtenuv)
+            py_wrapper_SetDeltaIR_cll(deltair1,deltair2)
 
-    deltauv = 0
-    deltair1 = 1
-    deltair2 = 0
+            new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
 
-    py_wrapper_SetDeltaIR_cll(deltair1,deltair2)
+            print("---- DeltaIR1 = 1, DeltaIR2 = 0 ----")
+            print("results from collier")
+            print(new_TNten)
+            print(new_TNtenuv)
 
-    new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+            print("my benchmark")
+            print(-1.7512811501690983788474799642118-0.3033948817543527556346836032989j)
+            print(0)
 
-    print("---- 10 ----")
+            
 
-    print(new_TNten)
-    print(new_TNtenuv)
+            deltauv = 0
+            deltair1 = 0
+            deltair2 = 1
 
-    
+            py_wrapper_SetDeltaIR_cll(deltair1,deltair2)
 
-    deltauv = 0
-    deltair1 = 0
-    deltair2 = 1
+            new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
 
-    py_wrapper_SetDeltaIR_cll(deltair1,deltair2)
-
-    new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
-
-    print("---- 01 ----")
-
-    print(new_TNten)
-    print(new_TNtenuv)
+            print("---- DeltaIR1 = 0, DeltaIR2 = 1 ----")
+            print("results from collier")
+            print(new_TNten)
+            print(new_TNtenuv)
+            print("my benchmark")
+            print(-1.1547075598891257241388639034827-1.0887930451518010652503444491188j)
+            print(0)
 
 
 
