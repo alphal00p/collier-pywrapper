@@ -104,6 +104,7 @@ contains
     ! Output vector:
     complex(c_double), intent(in), target :: TNtenerr(*)
 
+
     complex(c_double_complex), pointer :: fTNten(:), fTNtenuv(:), fMomInv(:), fmass2(:)
     complex(c_double_complex), pointer :: fMomvec(:,:)
     real(c_double), pointer :: fTNtenerr(:)
@@ -125,8 +126,10 @@ contains
       call TNten_cll(fTNten,fTNtenuv,fmass2,Nn,R,fTNtenerr)
     else
       call c_f_pointer(c_loc(MomInv(1)), fMomInv, [np])
-      call c_f_pointer(c_loc(Momvec(1)), fMomvec, [4,N])
+      call c_f_pointer(c_loc(Momvec(1)), fMomvec, [4,N-1])
+
       call TNten_cll(fTNten,fTNtenuv,fMomvec,fMomInv,fmass2,Nn,R,fTNtenerr)
+
     end if
 
   end subroutine wrapper_TNten_cll
@@ -193,5 +196,6 @@ contains
     call c_f_pointer(mu2, fmu2)
     call SetMuIR2_cll(fmu2)
   end subroutine wrapper_SetMuIR2_cll
+
 
 end module collier_wrapper

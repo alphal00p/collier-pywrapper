@@ -183,11 +183,17 @@ def py_wrapper_SetMuUV2_cll(delta):
     return lib.wrapper_SetMuUV2_cll(byref(delta_c))
 
 
-
-
+#######################################
+############## UTILITIES ##############
+#######################################
 
 def mink_square(v):
     return v[0]**2-v[1]**2-v[2]**2-v[3]**2
+
+
+###################################
+############## TESTS ##############
+###################################
 
 if __name__ == "__main__":
 
@@ -197,11 +203,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.input_string is not None:
-        if args.input_string=="test_scalar_triangle":
+        if args.input_string=="test_scalar_one_mass_triangle":
 
             N=3
             R=0
-            py_wrapper_init(N,R,"gg_to_H")
+            py_wrapper_init(N,R,"scalar_one_mass_triangle")
             Nt=py_wrapper_GetNt_cll(R)
 
             TNten = np.array([0+0j] * (Nt+1), dtype=np.complex128)
@@ -268,10 +274,83 @@ if __name__ == "__main__":
             print(0)
 
 
+        if args.input_string=="test_rank3_one_mass_bubble":
+
+            N=2
+            R=1
+            py_wrapper_init(N,R,"rank3_one_mass_bubble")
+            Nt=py_wrapper_GetNt_cll(R)
+
+            TNten = np.array([0+0j] * (Nt), dtype=np.complex128)
+            TNtenuv = np.array([0+0j] * (Nt), dtype=np.complex128)
+            TNtenerr = np.array([0] * (Nt), dtype=np.double)
+
+            p=np.array([1+0j,0+0j,0+0j,0+0j], dtype=np.complex128)
+
+            #Momvec = np.concatenate((p1,p2,q),axis=None)
+
+            Momvec = np.concatenate((p),axis=None)
+
+            MomInv = np.array([mink_square(p)], dtype=np.complex128)
+
+            mass2=np.array([0+0j,0+0j], dtype=np.complex128)
+
+            py_wrapper_SetMuIR2_cll(1)
+
+            py_wrapper_SetDeltaIR_cll(0,0)
+
+            new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+
+            print("---- DeltaIR1 = 0, DeltaIR2 = 0 ----")
+            print(new_TNten[0])
+            print(new_TNten)
+
+        if args.input_string=="test_rank3_one_mass_triangle":
+
+            N=3
+            R=2
+            py_wrapper_init(N,R,"rank3_one_mass_triangle")
+            Nt=py_wrapper_GetNt_cll(R)
+            Nc=py_wrapper_GetNc_cll(N,R)
+
+            TNten = np.array([0+0j] * (Nt), dtype=np.complex128)
+            TNtenuv = np.array([0+0j] * (Nt), dtype=np.complex128)
+            TNtenerr = np.array([0] * (Nt), dtype=np.double)
+
+            TN = np.array([0+0j] * (Nc), dtype=np.complex128)
+            TNuv = np.array([0+0j] * (Nc), dtype=np.complex128)
+
+            p1=np.array([1+0j,0+0j,0+0j,1+0j], dtype=np.complex128)
+            p2=np.array([1+0j,0+0j,0+0j,-1+0j], dtype=np.complex128)
+            #p2=np.array([-2+0j,0+0j,0+0j,0+0j], dtype=np.complex128)
+            zero=np.array([0+0j,0+0j,0+0j,0+0j], dtype=np.complex128)
+            q=-p1-p2
+
+            #Momvec = np.concatenate((p1,p2,q),axis=None)
+
+            Momvec = np.concatenate((p1,-p2),axis=None)
+
+            MomInv = np.array([mink_square(p1),mink_square(q),mink_square(p2)], dtype=np.complex128)
+
+            mass2=np.array([0+0j,0+0j,0+0j], dtype=np.complex128)
+
+            py_wrapper_SetMuIR2_cll(1)
+
+            py_wrapper_SetDeltaIR_cll(0,0)
+
+            new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+
+            new_TN, new_TNuv = py_wrapper_TN_cll(TN, TNuv, MomInv, mass2, N, R, TNtenerr, N)
+
+            print("---- DeltaIR1 = 0, DeltaIR2 = 0 ----")
+            print("---- rank 0 ----")
+            print(new_TNten[0])
+            print("---- rank 1 ----")
+            print(new_TNten[1:5])
+            print("---- rank 2 ----")
+            print(new_TNten[5:16])
 
 
+            
 
-
-
-
-
+           
