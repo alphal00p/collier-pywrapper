@@ -65,8 +65,8 @@ def py_wrapper_TN_cll(TN, TNuv, MomInv, mass2, Nn, R, TNerr, N):
     lib.wrapper_TN_cll(TN, TNuv, MomInv, mass2,
                         ctypes.byref(Nn_c), ctypes.byref(R_c),
                         TNerr, ctypes.byref(N_c))
-    
-    return TN, TNuv
+
+    return
 
 
 ###############################################
@@ -100,7 +100,7 @@ lib.wrapper_TNten_cll.argtypes = [
     ndpointer(dtype=np.double, flags="C_CONTIGUOUS"),      # TNtenerr
     ctypes.POINTER(ctypes.c_int)                           # N
 ]
-lib.wrapper_TNten_cll.restype = None 
+lib.wrapper_TNten_cll.restype = None
 
 def py_wrapper_TNten_cll(TNten, TNtenuv, MomVec, MomInv, mass2, Nn, R, TNtenerr, N):
 
@@ -112,7 +112,7 @@ def py_wrapper_TNten_cll(TNten, TNtenuv, MomVec, MomInv, mass2, Nn, R, TNtenerr,
                         ctypes.byref(Nn_c), ctypes.byref(R_c),
                         TNtenerr, ctypes.byref(N_c))
     
-    return TNten, TNtenuv
+    return
 
 
 #######################################################
@@ -191,6 +191,95 @@ def mink_square(v):
     return v[0]**2-v[1]**2-v[2]**2-v[3]**2
 
 
+##########################################
+############## GET IR POLES ##############
+##########################################
+
+def get_tensor(Momvec, MomInv, mass2, N, R, NN):
+
+
+    py_wrapper_SetMuIR2_cll(1)
+
+    Nt=py_wrapper_GetNt_cll(R)
+    #py_wrapper_SetDeltaUV_cll(1)
+    py_wrapper_SetDeltaIR_cll(0,0)
+
+    TNten1 = np.array([0+0j] * (Nt), dtype=np.complex128)
+    TNtenuv1 = np.array([0+0j] * (Nt), dtype=np.complex128)
+    TNtenerr1 = np.array([0] * (Nt), dtype=np.double)
+
+    py_wrapper_TNten_cll(TNten1, TNtenuv1, Momvec, MomInv, mass2, N, R, TNtenerr1, NN)
+
+    py_wrapper_SetDeltaIR_cll(1,0)
+
+    TNten2 = np.array([0+0j] * (Nt), dtype=np.complex128)
+    TNtenuv2 = np.array([0+0j] * (Nt), dtype=np.complex128)
+    TNtenerr2 = np.array([0] * (Nt), dtype=np.double)
+
+    py_wrapper_TNten_cll(TNten2, TNtenuv2, Momvec, MomInv, mass2, N, R, TNtenerr2, NN)
+    
+    singlep=TNten2-TNten1
+
+
+    py_wrapper_SetDeltaIR_cll(0,1)
+    TNten3 = np.array([0+0j] * (Nt), dtype=np.complex128)
+    TNtenuv3 = np.array([0+0j] * (Nt), dtype=np.complex128)
+    TNtenerr3 = np.array([0] * (Nt), dtype=np.double)
+
+    py_wrapper_TNten_cll(TNten3, TNtenuv3, Momvec, MomInv, mass2, N, R, TNtenerr3, NN)
+
+    doublep=TNten3-TNten1
+
+    result={"finite": TNten1, 
+            "epsIR^(-1)": singlep, 
+            "epsIR^(-2)": doublep,
+            "epsUV^{-1}": TNtenuv1}
+    
+    return result
+
+def get_tensor_coefficients(MomInv, mass2, N, R, NN):
+
+    py_wrapper_SetMuIR2_cll(1)
+
+    Nc=py_wrapper_GetNc_cll(N,R)
+    #py_wrapper_SetDeltaUV_cll(1)
+    py_wrapper_SetDeltaIR_cll(0,0)
+
+    TN1 = np.array([0+0j] * (Nc), dtype=np.complex128)
+    TNuv1 = np.array([0+0j] * (Nc), dtype=np.complex128)
+    TNerr1 = np.array([0] * (Nc), dtype=np.double)
+
+    py_wrapper_TN_cll(TN1, TNuv1, MomInv, mass2, N, R, TNerr1, NN)
+
+    py_wrapper_SetDeltaIR_cll(1,0)
+
+    TN2 = np.array([0+0j] * (Nc), dtype=np.complex128)
+    TNuv2 = np.array([0+0j] * (Nc), dtype=np.complex128)
+    TNerr2 = np.array([0] * (Nc), dtype=np.double)
+
+    py_wrapper_TN_cll(TN2, TNuv2, MomInv, mass2, N, R, TNerr2, NN)
+    
+    singlep=TN2-TN1
+
+
+    py_wrapper_SetDeltaIR_cll(0,1)
+    TN3 = np.array([0+0j] * (Nc), dtype=np.complex128)
+    TNuv3 = np.array([0+0j] * (Nc), dtype=np.complex128)
+    TNerr3 = np.array([0] * (Nc), dtype=np.double)
+
+    py_wrapper_TN_cll(TN3, TNuv3, MomInv, mass2, N, R, TNerr3, NN)
+
+    doublep=TN3-TN1
+
+    result={"finite": TN1, 
+            "epsIR^(-1)": singlep, 
+            "epsIR^(-2)": doublep,
+            "epsUV^{-1}": TNuv1}
+    
+    return result
+
+
+
 ###################################
 ############## TESTS ##############
 ###################################
@@ -228,12 +317,12 @@ if __name__ == "__main__":
 
             py_wrapper_SetDeltaIR_cll(0,0)
 
-            new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+            py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
 
             print("---- DeltaIR1 = 0, DeltaIR2 = 0 ----")
             print("results from collier")
-            print(new_TNten)
-            print(new_TNtenuv)
+            print(TNten)
+            print(TNtenuv)
             print("my benchmark")
             print(-1.4047075598891257241388639034827-1.0887930451518010652503444491188j)
             print(0)
@@ -244,12 +333,12 @@ if __name__ == "__main__":
 
             py_wrapper_SetDeltaIR_cll(deltair1,deltair2)
 
-            new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+            py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
 
             print("---- DeltaIR1 = 1, DeltaIR2 = 0 ----")
             print("results from collier")
-            print(new_TNten)
-            print(new_TNtenuv)
+            print(TNten)
+            print(TNtenuv)
 
             print("my benchmark")
             print(-1.7512811501690983788474799642118-0.3033948817543527556346836032989j)
@@ -263,15 +352,18 @@ if __name__ == "__main__":
 
             py_wrapper_SetDeltaIR_cll(deltair1,deltair2)
 
-            new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+            py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
 
             print("---- DeltaIR1 = 0, DeltaIR2 = 1 ----")
             print("results from collier")
-            print(new_TNten)
-            print(new_TNtenuv)
+            print(TNten)
+            print(TNtenuv)
             print("my benchmark")
             print(-1.1547075598891257241388639034827-1.0887930451518010652503444491188j)
             print(0)
+
+            resultwithpoles=get_tensor(Momvec, MomInv, mass2, N, R, N)
+            print(resultwithpoles)
 
 
         if args.input_string=="test_rank3_one_mass_bubble":
@@ -299,11 +391,15 @@ if __name__ == "__main__":
 
             py_wrapper_SetDeltaIR_cll(0,0)
 
-            new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+            py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
 
             print("---- DeltaIR1 = 0, DeltaIR2 = 0 ----")
-            print(new_TNten[0])
-            print(new_TNten)
+            print(TNten[0])
+            print(TNten)
+            print("----")
+            print(get_tensor(Momvec, MomInv, mass2, N, R, N))
+
+
 
         if args.input_string=="test_rank3_one_mass_triangle":
 
@@ -338,17 +434,21 @@ if __name__ == "__main__":
 
             py_wrapper_SetDeltaIR_cll(0,0)
 
-            new_TNten, new_TNtenuv = py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
+            py_wrapper_TNten_cll(TNten, TNtenuv, Momvec, MomInv, mass2, N, R, TNtenerr, N)
 
-            new_TN, new_TNuv = py_wrapper_TN_cll(TN, TNuv, MomInv, mass2, N, R, TNtenerr, N)
+            py_wrapper_TN_cll(TN, TNuv, MomInv, mass2, N, R, TNtenerr, N)
+
+
 
             print("---- DeltaIR1 = 0, DeltaIR2 = 0 ----")
             print("---- rank 0 ----")
-            print(new_TNten[0])
+            print(TNten[0])
             print("---- rank 1 ----")
-            print(new_TNten[1:5])
+            print(TNten[1:5])
             print("---- rank 2 ----")
-            print(new_TNten[5:16])
+            print(TNten[5:16])
+            print(get_tensor(Momvec, MomInv, mass2, N, R, N))
+            print(get_tensor_coefficients(MomInv, mass2, N, R, N))
 
 
             
